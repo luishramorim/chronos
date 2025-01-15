@@ -2,13 +2,13 @@ import { firestore } from '../config/FirebaseConfig';
 import { auth } from '../config/FirebaseConfig';
 import { serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
 
-interface UserData {
+export interface UserData {
   id: string;
   name?: string;
   email?: string;
 }
 
-interface Task {
+export interface Task {
   id: string;
   title: string;
   date: Timestamp;
@@ -49,7 +49,7 @@ export const getUserData = async (): Promise<UserData> => {
   }
 };
 
-export const createTask = async (title: string, date: Date): Promise<void> => {
+export const createTask = async (title: string, date: Date, selectedTime: Date | undefined): Promise<void> => {
   try {
     const user = auth.currentUser;
 
@@ -57,9 +57,14 @@ export const createTask = async (title: string, date: Date): Promise<void> => {
       throw new Error('Usuário não autenticado');
     }
 
+    const combinedDate = new Date(date);
+    if (selectedTime) {
+      combinedDate.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0);
+    }
+
     const taskData = {
       title,
-      date: Timestamp.fromDate(date),
+      date: Timestamp.fromDate(combinedDate),
       createdAt: serverTimestamp(),
       isCompleted: false,
     };

@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar, Platform, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { PaperProvider } from 'react-native-paper';
 import { onAuthStateChanged } from 'firebase/auth';
 
-import { useFonts } from 'expo-font';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import CreateEvent from '@/components/ui/CreateEvent';
-import TaskView from '@/components/ui/TaskView';
+import { useCustomFonts } from '../config/fonts';
+import { auth } from '../config/FirebaseConfig';
+import { theme } from '../components/Theme';
 
-import { auth } from '@/config/FirebaseConfig';
-import Index from '@/app/index';
+import Index from '../app/index';
 import LoginScreen from './loginScreen';
 import RegisterScreen from './registerScreen';
 import RecoveryScreen from './recoveryScreen';
 import VerifyEmail from './verifyEmail';
-import { theme } from '@/components/Theme';
-import { Platform } from 'react-native';
+import CreateEvent from '../components/ui/CreateEvent';
+import TaskView from '../components/ui/TaskView';
 
 const AuthStack = createStackNavigator();
 const AppStack = createStackNavigator();
@@ -35,12 +33,12 @@ const AuthenticatedStack = () => (
     <AppStack.Screen
       name="CreateEvent"
       component={CreateEvent}
-      options={{ title: 'Novo evento', headerShown: false }}
+      options={{ title: 'Novo Evento', headerShown: false }}
     />
     <AppStack.Screen
       name="TaskView"
       component={TaskView}
-      options={{ title: 'Visualizar tarefa', headerShown: false }}
+      options={{ title: 'Visualizar Tarefa', headerShown: false }}
     />
   </AppStack.Navigator>
 );
@@ -52,13 +50,11 @@ const UnauthenticatedStack = () => (
       component={LoginScreen}
       options={{ title: 'Login', headerShown: false }}
     />
-
     <AuthStack.Screen
       name="Recovery"
       component={RecoveryScreen}
-      options={{ title: 'Recuperar senha', headerShown: false }}
+      options={{ title: 'Recuperar Senha', headerShown: false }}
     />
-
     <AuthStack.Screen
       name="Register"
       component={RegisterScreen}
@@ -72,16 +68,13 @@ const EmailNotVerifiedStack: React.FC<EmailNotVerifiedStackProps> = ({ setEmailV
     <AuthStack.Screen
       name="VerifyEmail"
       component={() => <VerifyEmail setEmailVerified={setEmailVerified} />}
-      options={{ title: 'Verifique seu email', headerShown: false }}
+      options={{ title: 'Verifique seu E-mail', headerShown: false }}
     />
   </AuthStack.Navigator>
 );
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    MaterialCommunityIcons: require('../assets/fonts/MaterialCommunityIcons.ttf'), 
-  });
-
+  const fontsLoaded = useCustomFonts();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [emailVerified, setEmailVerified] = useState<boolean | null>(null);
 
@@ -99,32 +92,26 @@ export default function RootLayout() {
     return () => unsubscribe();
   }, []);
 
-  if (isAuthenticated === null) {
-    return null;
-  }
-
   return (
     <PaperProvider theme={theme}>
-      <React.Fragment>
-      {Platform.OS === 'web' ? (
-          <style type="text/css">{`
-            @font-face {
-              font-family: 'MaterialCommunityIcons';
-              src: url('/fonts/MaterialCommunityIcons.ttf') format('truetype');
-            }
-          `}</style>
-        ) : null}
-        {isAuthenticated ? (
-          emailVerified ? (
-            <AuthenticatedStack />
-          ) : (
-            <EmailNotVerifiedStack setEmailVerified={setEmailVerified} />
-          )
+      {Platform.OS === 'web' && (
+        <style type="text/css">{`
+          @font-face {
+            font-family: 'MaterialCommunityIcons';
+            src: url('/fonts/MaterialCommunityIcons.ttf') format('truetype');
+          }
+        `}</style>
+      )}
+      {isAuthenticated ? (
+        emailVerified ? (
+          <AuthenticatedStack />
         ) : (
-          <UnauthenticatedStack />
-        )}
+          <EmailNotVerifiedStack setEmailVerified={setEmailVerified} />
+        )
+      ) : (
+        <UnauthenticatedStack />
+      )}
       <StatusBar style="light" />
-      </React.Fragment>
     </PaperProvider>
   );
 }

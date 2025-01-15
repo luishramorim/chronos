@@ -16,8 +16,6 @@ interface Styles {
 const styles = StyleSheet.create<Styles>({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: theme.colors.background,
   },
   textLogo: {
@@ -29,7 +27,7 @@ const styles = StyleSheet.create<Styles>({
     marginBottom: 10
   },
   button: {
-    marginTop: 10
+    marginTop: 10,
   },
   checkbox: {
     flexDirection: 'row',

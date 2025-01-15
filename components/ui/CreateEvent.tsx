@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { View, Platform } from 'react-native'
 import { Switch, Button, TextInput, Appbar, Text, SegmentedButtons, Divider } from 'react-native-paper'
-import { DatePickerModal } from 'react-native-paper-dates'
+import { DatePickerModal, TimePickerModal } from 'react-native-paper-dates'
 
 import styles from '../Stylesheet'
 
@@ -13,6 +13,8 @@ const CreateEvent: React.FC<{ sheetRef: React.Ref<any>, navigation: any }> = ({ 
   const [startDate, setStartDate] = useState<Date>(new Date())
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [openDatePicker, setOpenDatePicker] = useState<boolean>(false)
+  const [openTimePicker, setOpenTimePicker] = useState<boolean>(false)
+  const [selectedTime, setSelectedTime] = useState<Date | undefined>(undefined)
   const [selectedDate, setSelectedDate] = useState<'start' | 'end'>('start')
   const [value, setValue] = useState('event')
 
@@ -23,30 +25,45 @@ const CreateEvent: React.FC<{ sheetRef: React.Ref<any>, navigation: any }> = ({ 
   }, [])
 
   const onConfirmDatePicker = useCallback(
-    (params: { date: Date }) => {
+    (params: { date: Date | undefined }) => {
       setOpenDatePicker(false)
-      if (selectedDate === 'start') {
-        setStartDate(params.date)
-      } else if (selectedDate === 'end') {
-        setEndDate(params.date)
+      if (params.date) {
+        if (selectedDate === 'start') {
+          setStartDate(params.date)
+        } else if (selectedDate === 'end') {
+          setEndDate(params.date)
+        }
       }
     },
     [selectedDate]
   )
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString()
-  }
+  const onDismissTimePicker = useCallback(() => {
+    setOpenTimePicker(false)
+  }, [])
 
-  const formatPeriod = () => {
-    if (startDate && endDate) {
-      return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
-    }
-    return 'Selecione as datas'
+  const onConfirmTimePicker = useCallback(
+    (params: { hours: number; minutes: number }) => {
+      setOpenTimePicker(false)
+      const { hours, minutes } = params
+      const time = new Date()
+      time.setHours(hours, minutes, 0, 0)
+      setSelectedTime(time)
+    },
+    []
+  )
+
+  const formatDate = (date: Date) => date.toLocaleDateString()
+
+  const formatTime = (time: Date | undefined) => {
+    if (!time) return 'Escolher horário'
+    const hours = time.getHours().toString().padStart(2, '0')
+    const minutes = time.getMinutes().toString().padStart(2, '0')
+    return `${hours}:${minutes}`
   }
 
   const handleClose = () => {
-    if (sheetRef.current) {
+    if (sheetRef && 'current' in sheetRef && sheetRef.current) {
       sheetRef.current.close()
     }
   }
@@ -54,19 +71,11 @@ const CreateEvent: React.FC<{ sheetRef: React.Ref<any>, navigation: any }> = ({ 
   return (
     <>
       <Appbar.Header mode="small">
-        {Platform.OS === 'web' ? (
-          null
-        ) : (
-          <Appbar.BackAction onPress={() => navigation.goBack()} />
-        )}
+        {Platform.OS === 'web' ? null : <Appbar.BackAction onPress={() => navigation.goBack()} />}
         <Appbar.Content title="Novo evento" />
-        {Platform.OS === 'web' ? (
-          <Appbar.Action icon="close" onPress={handleClose} />
-        ) : (
-          null
-        )}
+        {Platform.OS === 'web' ? <Appbar.Action icon="close" onPress={handleClose} /> : null}
       </Appbar.Header>
-      <View style={[styles.container, { justifyContent: 'flex-start' }]}>
+      <View style={[styles.container, { justifyContent: 'flex-start', alignItems: 'center' }]}>
         <TextInput
           mode="outlined"
           label="Título"
@@ -100,61 +109,73 @@ const CreateEvent: React.FC<{ sheetRef: React.Ref<any>, navigation: any }> = ({ 
           </Button>
         </View>
 
+        {value === 'task' && (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', maxWidth: 350, marginTop: 20, alignItems: 'center' }}>
+            <Text variant="titleMedium">Hora</Text>
+            <Button onPress={() => setOpenTimePicker(true)} mode="text">
+              {formatTime(selectedTime)}
+            </Button>
+          </View>
+        )}
+
         {value === 'event' && (
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', maxWidth: 350, marginTop: 20, alignItems: 'center' }}>
             <Text variant="titleMedium">Término</Text>
-            <Button
-              onPress={() => { setSelectedDate('end'), setOpenDatePicker(true) }}
-              mode="text"
-              disabled={isAllDay}
-            >
+            <Button onPress={() => { setSelectedDate('end'), setOpenDatePicker(true) }} mode="text" disabled={isAllDay}>
               {endDate ? formatDate(endDate) : 'Escolher data término'}
             </Button>
           </View>
         )}
 
         <DatePickerModal
-          locale="pt"
+          locale="pt-BR"
           mode="single"
           visible={openDatePicker}
           onDismiss={onDismissDatePicker}
           date={selectedDate === 'start' ? startDate : endDate}
           onConfirm={onConfirmDatePicker}
-          saveLabel='Salvar'
-          label='Selecione a data'
+          saveLabel="Salvar"
+          label="Selecione a data"
         />
-        <Button
-  mode="contained"
-  style={[
-    styles.button,
-    Platform.OS === 'android' || Platform.OS === 'ios'
-      ? { position: 'absolute', bottom: 50 }
-      : null,
-  ]}
-  onPress={async () => {
-    try {
-      if (value === 'task') {
-        await createTask(title, startDate);
-        console.log('Tarefa salva!');
-      } else if (value === 'event') {
-        await createEvent(title, startDate, endDate, isAllDay);
-        console.log('Evento salvo!');
-      }
+        <TimePickerModal
+          visible={openTimePicker}
+          onDismiss={onDismissTimePicker}
+          onConfirm={onConfirmTimePicker}
+          hours={12}
+          minutes={0}
+          label="Selecione a hora"
+        />
 
-      if (Platform.OS === 'android' || Platform.OS === 'ios') {
-        navigation.goBack(); 
-      } else if (Platform.OS === 'web') {
-        if (sheetRef.current) {
-          sheetRef.current.close();
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-    }
-  }}
->
-  Salvar
-</Button>
+        <Button
+          mode="contained"
+          style={[
+            styles.button,
+            Platform.OS === 'android' || Platform.OS === 'ios' ? { position: 'absolute', bottom: 50 } : null,
+          ]}
+          onPress={async () => {
+            try {
+              if (value === 'task') {
+                await createTask(title, startDate, selectedTime)
+                console.log('Tarefa salva!')
+              } else if (value === 'event') {
+                await createEvent(title, startDate, endDate, isAllDay)
+                console.log('Evento salvo!')
+              }
+
+              if (Platform.OS === 'android' || Platform.OS === 'ios') {
+                navigation.goBack()
+              } else if (Platform.OS === 'web') {
+                if (sheetRef && 'current' in sheetRef && sheetRef.current) {
+                  sheetRef.current.close()
+                }
+              }
+            } catch (error) {
+              console.error('Erro ao salvar:', error)
+            }
+          }}
+        >
+          Salvar
+        </Button>
       </View>
     </>
   )

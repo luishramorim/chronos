@@ -64,7 +64,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         <Appbar.Content title="Nova conta" />
       </Appbar.Header>
 
-      <View style={styles.container}>
+      <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
         <TextInput
           autoCorrect={false}
           autoComplete="name"

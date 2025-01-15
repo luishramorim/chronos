@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Platform } from 'react-native';
+import { View, ScrollView, Platform, Dimensions, StyleSheet } from 'react-native';
 import { Appbar, Button, Text, ActivityIndicator, List } from 'react-native-paper';
 import styles from '@/components/Stylesheet';
 import { logout } from '@/services/authService';
@@ -13,22 +13,30 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loadingUserData, setLoadingUserData] = useState<boolean>(true);
-  const [tasks, setTasks] = useState<Task[]>([]); 
-  const [loadingTasks, setLoadingTasks] = useState<boolean>(true); 
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState<boolean>(true);
+  const [expandedAccordion, setExpandedAccordion] = useState<string>('hoje');
   const [error, setError] = useState<string | null>(null);
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      const width = Dimensions.get(Platform.OS === 'web' ? 'window' : 'screen').width;
+      setScreenWidth(width);
+    };
+
+    const subscription = Dimensions.addEventListener('change', updateWidth);
+
+    return () => subscription?.remove?.();
+  }, []);
 
   const handleSignOut = async () => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       await logout();
       console.log('Usuário desconectado.');
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Erro ao sair:', error.message);
-      } else {
-        console.error('Erro desconhecido ao sair.');
-      }
+      console.error('Erro ao sair:', error);
     } finally {
       setIsLoading(false);
     }
@@ -39,12 +47,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
       try {
         const data = await getUserData();
         setUserData(data);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('Erro desconhecido ao carregar os dados do usuário');
-        }
+      } catch (err) {
+        setError('Erro ao carregar dados do usuário');
       } finally {
         setLoadingUserData(false);
       }
@@ -56,9 +60,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
   useEffect(() => {
     const fetchUserTasks = () => {
       const unsubscribe = getUserTasks((updatedTasks: Task[]) => {
-        const sortedTasks = updatedTasks.sort((a, b) => {
-          return a.date.seconds - b.date.seconds;
-        });
+        const sortedTasks = updatedTasks.sort((a, b) => a.date.seconds - b.date.seconds);
         setTasks(sortedTasks);
         setLoadingTasks(false);
       });
@@ -71,13 +73,11 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
 
   const formatDate = (timestamp: any) => {
     const date = timestamp.toDate();
-    const formattedDate = new Intl.DateTimeFormat('pt-BR', {
-      weekday: 'short', 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric'
-    }).format(date);
-    return formattedDate;
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `${hours}:${minutes}, ${day}/${month}`;
   };
 
   const groupTasksByDate = (tasks: Task[]) => {
@@ -87,30 +87,25 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const groupedTasks: {
-      yesterday: Task[];
-      today: Task[];
-      tomorrow: Task[];
-      others: Task[];
-    } = {
-      yesterday: [],
-      today: [],
-      tomorrow: [],
-      others: []
+    const groupedTasks: { [key: string]: Task[] } = {
+      ontem: [],
+      hoje: [],
+      amanhã: [],
+      outros: [],
     };
 
     tasks.forEach((task) => {
       const taskDate = task.date.toDate();
-      const taskDateString = taskDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      const taskDateString = taskDate.toISOString().split('T')[0];
 
       if (taskDateString === yesterday.toISOString().split('T')[0]) {
-        groupedTasks.yesterday.push(task);
+        groupedTasks.ontem.push(task);
       } else if (taskDateString === today.toISOString().split('T')[0]) {
-        groupedTasks.today.push(task);
+        groupedTasks.hoje.push(task);
       } else if (taskDateString === tomorrow.toISOString().split('T')[0]) {
-        groupedTasks.tomorrow.push(task);
+        groupedTasks.amanhã.push(task);
       } else {
-        groupedTasks.others.push(task);
+        groupedTasks.outros.push(task);
       }
     });
 
@@ -121,99 +116,51 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
 
   return (
     <>
-      <Appbar.Header mode="small">
+      <Appbar.Header mode='small'>
         <Appbar.Content title="Chronos" />
         <Appbar.Action icon="account" onPress={() => {}} />
-
         {Platform.OS === 'web' && (
-          <Button
-            style={{ marginRight: 10 }}
-            mode="contained"
-            onPress={handleSignOut}
-            loading={isLoading}
-            disabled={isLoading}
-          >
+          <Button mode="contained" onPress={handleSignOut} loading={isLoading} disabled={isLoading}>
             {isLoading ? 'Saindo' : 'Sair'}
           </Button>
         )}
       </Appbar.Header>
-      <View style={styles.container}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         {loadingUserData ? (
-          <ActivityIndicator animating={true} size="large" />
+          <ActivityIndicator animating size="large" />
         ) : error ? (
-          <Text variant="bodyLarge" style={{ color: 'red' }}>
-            {error}
-          </Text>
+          <Text style={{ color: 'red' }}>{error}</Text>
         ) : (
           <View>
             {loadingTasks ? (
-              <ActivityIndicator animating={true} size="large" />
+              <ActivityIndicator animating size="large" />
             ) : (
               <ScrollView>
-                {groupedTasks.yesterday.length > 0 ? (
-                  <List.Accordion style={styles.accordion} title="Ontem" id="yesterday">
-                    {groupedTasks.yesterday.map((item) => (
-                      <CardTask
-                        key={item.id}
-                        title={item.title}
-                        subtitle={formatDate(item.date)} 
-                        taskId={item.id}
-                        onToggle={item.isCompleted} 
-                        isCompleted={item.isCompleted}                   
-                      />
-                    ))}
+                {Object.entries(groupedTasks).map(([key, taskGroup]) => (
+                  <List.Accordion
+                  style={{ width: screenWidth, justifyContent: 'center' }}
+                    key={key}
+                    title={key.charAt(0).toUpperCase() + key.slice(1)}
+                    expanded={expandedAccordion === key}
+                    onPress={() => setExpandedAccordion(expandedAccordion === key ? '' : key)}
+                  >
+                    <View style={{ alignItems: 'center' }}>
+                      {taskGroup.map((task) => (
+                        <View key={task.id}>
+                          <CardTask
+                            title={task.title}
+                            subtitle={formatDate(task.date)}
+                            taskId={task.id}
+                            onToggle={task.isCompleted}
+                            isCompleted={task.isCompleted}
+                          />
+                        </View>
+                      ))}
+                    </View>
                   </List.Accordion>
-                ) : null}
-
-                {groupedTasks.today.length > 0 ? (
-                  <List.Accordion style={styles.accordion} title="Hoje" id="today">
-                    {groupedTasks.today.map((item) => (
-                      <CardTask
-                        key={item.id}
-                        title={item.title}
-                        subtitle={formatDate(item.date)} 
-                        taskId={item.id}
-                        onToggle={item.isCompleted} 
-                        isCompleted={item.isCompleted}                   
-                      />
-                    ))}
-                  </List.Accordion>
-                ) : null}
-
-                {groupedTasks.tomorrow.length > 0 ? (
-                  <List.Accordion style={styles.accordion} title="Amanhã" id="tomorrow">
-                    {groupedTasks.tomorrow.map((item) => (
-                      <CardTask
-                        key={item.id}
-                        title={item.title}
-                        subtitle={formatDate(item.date)} 
-                        taskId={item.id}
-                        onToggle={item.isCompleted} 
-                        isCompleted={item.isCompleted}                   
-                      />
-                    ))}
-                  </List.Accordion>
-                ) : null}
-
-                {groupedTasks.others.length > 0 ? (
-                  <List.Accordion style={styles.accordion} title="Outros Dias" id="others">
-                    {groupedTasks.others.map((item) => (
-                      <CardTask
-                        key={item.id}
-                        title={item.title}
-                        subtitle={formatDate(item.date)} 
-                        taskId={item.id}
-                        onToggle={item.isCompleted} 
-                        isCompleted={item.isCompleted}                   
-                      />
-                    ))}
-                  </List.Accordion>
-                ) : null}
-
+                ))}
                 {tasks.length === 0 && !loadingTasks && (
-                  <Text variant='headlineSmall' style={{ textAlign: 'center', marginTop: 20 }}>
-                    Sem tarefas
-                  </Text>
+                  <Text style={{ textAlign: 'center', marginTop: 20 }}>Sem tarefas</Text>
                 )}
               </ScrollView>
             )}

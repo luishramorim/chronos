@@ -65,7 +65,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
       <Text style={styles.textLogo} variant="displaySmall">
         Chronos
       </Text>
