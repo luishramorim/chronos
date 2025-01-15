@@ -31,7 +31,7 @@ const Fab: React.FC<FabProps> = () => {
         style={styles.fab}
         onPress={handlePress}
       />
-      <BottomSheet height="80%" ref={sheetRef} style={styles.bottomSheet}>
+      <BottomSheet height="90%" ref={sheetRef} style={styles.bottomSheet}>
         <CreateEvent sheetRef={sheetRef} navigation={navigation} />
       </BottomSheet>
     </>

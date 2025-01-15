@@ -33,7 +33,7 @@ const CardTask: React.FC<CardTaskProps> = ({ title, subtitle, taskId, isComplete
   return (
     <View>
       <Card
-        style={{ width: '80%', minWidth: 350, maxWidth: 500, marginTop: 10 }}
+        style={{ width: '90%', minWidth: 350, maxWidth: 500, marginTop: 10 }}
         onPress={toggleCheck}
       >
         <Card.Title

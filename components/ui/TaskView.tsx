@@ -65,12 +65,28 @@ const TaskView: React.FC<TaskViewProps> = ({ route, navigation }) => {
     }
   };
 
+  const handleCompleteTask = async () => {
+    try {
+      const newCompletionState = !taskData?.isCompleted;
+      await firestore
+        .collection('users')
+        .doc(auth.currentUser?.uid)
+        .collection('tasks')
+        .doc(taskId)
+        .update({
+          isCompleted: newCompletionState
+        });
+      setTaskData(prev => prev ? { ...prev, isCompleted: newCompletionState } : prev);
+    } catch (err) {
+      setError('Erro ao marcar tarefa como concluída.');
+    }
+  };
+
   return (
     <>
       <Appbar.Header mode="large">
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title={taskData ? taskData.title : 'Carregando...'} titleStyle={{ textDecorationLine: 'line-through' }} />
-        <Appbar.Action icon="pencil" onPress={() => {}} />
+        <Appbar.Content title={taskData ? taskData.title : 'Carregando...'} titleStyle={{ textDecorationLine: taskData?.isCompleted ? 'line-through' : 'none' }}/>
         <Appbar.Action icon="trash-can" onPress={() => setVisibleDialog(true)} />
       </Appbar.Header>
       <View style={[styles.container, {width: '100%', maxWidth: 450, alignSelf: 'center'}]}>
@@ -81,12 +97,16 @@ const TaskView: React.FC<TaskViewProps> = ({ route, navigation }) => {
         ) : (
           taskData && (
             <ScrollView>
-              <Button onPress={() => console.log("Concluida!")} style={{ marginBottom: 20, width: '40%', alignSelf: 'center' }} mode='contained'>Concluir</Button>
+              <Button 
+                mode={taskData.isCompleted ? 'elevated' : 'contained'}
+                onPress={handleCompleteTask} 
+                style={{ marginBottom: 20, width: '40%', alignSelf: 'center' }} 
+                >
+                {taskData.isCompleted ? 'Concluída' : 'Concluir'}
+              </Button>
               <View style={{ justifyContent: 'flex-start'}}>
                 <ScrollView horizontal>
                   <View style={{ flexDirection: 'row' }}>
-                    <Chip style={{ marginLeft: 20 }}>Pessoal</Chip>
-                    <Chip style={{ marginLeft: 10 }}>Transporte</Chip>
                   </View>
                 </ScrollView>
                 <View style={{ flexDirection: 'column'}}>
@@ -95,23 +115,12 @@ const TaskView: React.FC<TaskViewProps> = ({ route, navigation }) => {
                       title={new Date(taskData.date.seconds * 1000).toLocaleDateString('pt-BR')}
                       subtitle={taskData.isCompleted ? 'Concluída' : 'Pendente'}
                       left={(props) => <Avatar.Icon {...props} icon="calendar" />}
-                      right={(props) => <IconButton {...props} icon="circle-outline" onPress={() => {}} />}
                     />
                   </Card>
                 </View>
               </View>
               <List.Accordion title="Anotações">
-                <Text style={{ marginHorizontal: 20 }}>Anotações gerais, blábláblá</Text>
-              </List.Accordion>
-              <List.Accordion title="Anexos">
-                <Card style={{ width: '90%', alignSelf: 'center' }}>
-                  <Card.Title
-                    title="Passagem"
-                    subtitle="passagem.pdf"
-                    left={(props) => <Avatar.Icon {...props} icon="paperclip" />}
-                    right={(props) => <IconButton {...props} icon="trash-can" onPress={() => {}} />}
-                  />
-                </Card>
+                <Text style={{ marginHorizontal: 20 }}>{taskData.note}</Text>
               </List.Accordion>
             </ScrollView>
           )

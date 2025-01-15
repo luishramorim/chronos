@@ -43,7 +43,7 @@ const RecoveryScreen: React.FC<RecoveryScreenProps> = ({ navigation }) => {
         <Appbar.Content title="Recuperar senha" />
       </Appbar.Header>
       <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
-        <Text style={{ marginHorizontal: 20, marginBottom: 20 }} variant='headlineSmall'>
+        <Text style={{ marginHorizontal: 20, marginBottom: 20 }} variant='titleLarge'>
           Digite o email usado na criação da sua conta
         </Text>
 

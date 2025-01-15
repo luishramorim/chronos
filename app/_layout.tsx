@@ -10,6 +10,7 @@ import { theme } from '../components/Theme';
 
 import Index from '../app/index';
 import LoginScreen from './loginScreen';
+import ProfileScreen from './profileScreen';
 import RegisterScreen from './registerScreen';
 import RecoveryScreen from './recoveryScreen';
 import VerifyEmail from './verifyEmail';
@@ -39,6 +40,11 @@ const AuthenticatedStack = () => (
       name="TaskView"
       component={TaskView}
       options={{ title: 'Visualizar Tarefa', headerShown: false }}
+    />
+    <AppStack.Screen
+      name="Profile"
+      component={ProfileScreen}
+      options={{ title: 'Perfil', headerShown: false }}
     />
   </AppStack.Navigator>
 );

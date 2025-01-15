@@ -4,6 +4,7 @@ import { Text, Button, Dialog, Portal, Paragraph, Appbar } from 'react-native-pa
 import { auth } from '@/config/FirebaseConfig';
 import { verifyEmail, reverifyEmail } from '@/services/authService';
 import styles from '@/components/Stylesheet';
+import { logout } from '@/services/authService';
 
 interface VerifyEmailScreenProps {
   navigation: any;
@@ -16,6 +17,19 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ navigation, setEm
   const [isLoadingReverifyEmail, setIsLoadingReverifyEmail] = React.useState<boolean>(false);
   const [dialogVisible, setDialogVisible] = React.useState<boolean>(false);
   const [dialogMessage, setDialogMessage] = React.useState<string>('');
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+
+    const handleSignOut = async () => {
+      setIsLoading(true);
+      try {
+        await logout();
+        console.log('Usuário desconectado.');
+      } catch (error) {
+        console.error('Erro ao sair:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   React.useEffect(() => {
     const user = auth.currentUser;
@@ -70,17 +84,17 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ navigation, setEm
 
   return (
     <>
-      <Appbar.Header>
+      <Appbar.Header mode='small'>
         <Appbar.Content title="Verificação de Email" />
       </Appbar.Header>
-      <View style={styles.container}>
-        <Text variant="headlineMedium">Antes de começarmos, precisamos verificar o seu email.</Text>
+      <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
+        <Text style={{ marginHorizontal: 20 }} variant="titleLarge">Antes de começarmos, precisamos verificar o seu email</Text>
         {emailVerified !== null && emailVerified ? (
-          <Text variant="bodyLarge">Seu email já foi verificado.</Text>
+          <Text variant="bodyLarge" style={{ marginHorizontal: 20 }}>Seu email já foi verificado.</Text>
         ) : (
           <>
             <Button
-              style={styles.button}
+              style={[styles.button, { marginTop: 30 }]}
               mode="contained"
               onPress={handleVerifyEmail}
               loading={isLoadingVerifyEmail} 
@@ -90,14 +104,16 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ navigation, setEm
             </Button>
 
             <Button
-              style={styles.button}
-              mode="text"
+              style={[styles.button, {marginVertical: 20}]}
+              mode="elevated"
               onPress={handleReverifyEmail}
               loading={isLoadingReverifyEmail}
               disabled={isLoadingReverifyEmail}
             >
               Já verifiquei o meu email
             </Button>
+
+            <Button onPress={handleSignOut}>Sair</Button>
           </>
         )}
 

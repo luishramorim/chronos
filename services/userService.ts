@@ -1,6 +1,7 @@
-import { firestore } from '../config/FirebaseConfig';
+import { firestore, storage } from '../config/FirebaseConfig';
 import { auth } from '../config/FirebaseConfig';
 import { serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export interface UserData {
   id: string;
@@ -14,6 +15,8 @@ export interface Task {
   date: Timestamp;
   createdAt: Timestamp;
   isCompleted: boolean;
+  note?: string;
+  attachmentUrl?: string;
 }
 
 interface Event {
@@ -49,7 +52,26 @@ export const getUserData = async (): Promise<UserData> => {
   }
 };
 
-export const createTask = async (title: string, date: Date, selectedTime: Date | undefined): Promise<void> => {
+export const uploadFileToFirebase = async (fileUri: string, fileName: string, userId: string): Promise<string> => {
+  try {
+    const fileRef = ref(storage, `users/${userId}/data/${fileName}`);
+    const fileBlob = await fetch(fileUri).then(res => res.blob());
+    await uploadBytes(fileRef, fileBlob);
+    const downloadURL = await getDownloadURL(fileRef);
+    return downloadURL;
+  } catch (error) {
+    console.error('Erro ao fazer upload do arquivo:', error);
+    throw error;
+  }
+};
+
+export const createTask = async (
+  title: string, 
+  date: Date, 
+  selectedTime: Date | undefined, 
+  note: string, 
+  attachment: { uri: string; name: string; type: string } | null
+): Promise<void> => {
   try {
     const user = auth.currentUser;
 
@@ -62,11 +84,18 @@ export const createTask = async (title: string, date: Date, selectedTime: Date |
       combinedDate.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0);
     }
 
+    let attachmentUrl: string | undefined = undefined;
+    if (attachment) {
+      attachmentUrl = await uploadFileToFirebase(attachment.uri, attachment.name, user.uid);
+    }
+
     const taskData = {
       title,
       date: Timestamp.fromDate(combinedDate),
       createdAt: serverTimestamp(),
       isCompleted: false,
+      note,
+      attachmentUrl: attachmentUrl || null,
     };
 
     await firestore
@@ -74,8 +103,6 @@ export const createTask = async (title: string, date: Date, selectedTime: Date |
       .doc(user.uid)
       .collection('tasks')
       .add(taskData);
-
-    console.log('Tarefa criada com sucesso!');
   } catch (error) {
     console.error('Erro ao criar a tarefa:', error);
     throw error;
@@ -83,9 +110,9 @@ export const createTask = async (title: string, date: Date, selectedTime: Date |
 };
 
 export const createEvent = async (
-  title: string,
-  startDate: Date,
-  endDate: Date | undefined,
+  title: string, 
+  startDate: Date, 
+  endDate: Date | undefined, 
   isAllDay: boolean
 ): Promise<void> => {
   try {
@@ -109,8 +136,6 @@ export const createEvent = async (
         isAllDay,
         createdAt: serverTimestamp(),
       });
-
-    console.log('Evento criado com sucesso!');
   } catch (error) {
     console.error('Erro ao criar o evento:', error);
     throw error;

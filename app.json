@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Chronos",
+    "name": "Chronos - App",
     "slug": "Chronos",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -46,7 +46,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "d8ff04cc-93b1-4772-8a7b-2ccdf770187e"
+        "projectId": "129c8397-f8de-4f36-8fe4-d1d6877aab9b"
       }
     }
   }
