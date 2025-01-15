@@ -1,8 +1,5 @@
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
-import 'firebase/compat/storage';
 
+<<<<<<< HEAD:config/FirebaseConfig.ts
 const firebaseConfig = {
     apiKey: "AIzaSyD4lBWYgqJzyBFNRlEx0juSzyx42H4F5-Q",
     authDomain: "chronos-portal.firebaseapp.com",
@@ -22,3 +19,5 @@ const firestore = firebase.firestore();
 const storage = firebase.storage();
 
 export default { firebase, auth, firestore, storage };
+=======
+>>>>>>> 3b526b7251514619845bb26bda3ed40a8d933751:config/FirebaseConfig.tsx
