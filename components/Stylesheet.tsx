@@ -23,11 +23,15 @@ const styles = StyleSheet.create<Styles>({
   },
   textInput: {
     width: '90%',
-    maxWidth: 350,
-    marginBottom: 10
+    maxWidth: 450,
+    marginBottom: 20,
+    backgroundColor: theme.colors.background
   },
   button: {
     marginTop: 10,
+    minWidth: 150,
+    minHeight: 50,
+    justifyContent: 'center'
   },
   checkbox: {
     flexDirection: 'row',

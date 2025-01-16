@@ -15,6 +15,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [visibleDialog, setVisibleDialog] = useState(false);
+  const [passwordHint, setPasswordHint] = useState(true);
 
   const emailInputRef = useRef<any>(null);
   const passwordInputRef = useRef<any>(null);
@@ -23,6 +24,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
+
+  const togglePasswordHint = () => {
+    setPasswordHint(!passwordHint)
+  }
 
   const isFormValid = isEmailValid(email) && password.length > 0;
 
@@ -75,7 +80,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="email"
-        mode="outlined"
+        mode="flat"
         label="Email"
         value={email}
         onChangeText={setEmail}
@@ -87,17 +92,18 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
       <TextInput
         ref={passwordInputRef}
-        secureTextEntry
+        secureTextEntry={passwordHint}
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="password"
-        mode="outlined"
+        mode="flat"
         label="Senha"
         value={password}
         onChangeText={setPassword}
         style={styles.textInput}
         returnKeyType="done"
         onSubmitEditing={handleLogin}
+        right={<TextInput.Icon icon={passwordHint ? "eye-off" : "eye"} onPress={togglePasswordHint} />}
       />
 
       <Button
